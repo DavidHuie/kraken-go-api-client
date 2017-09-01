@@ -2,7 +2,9 @@ package krakenapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
+	"time"
 )
 
 const (
@@ -22,9 +24,9 @@ const (
 	GNOXBT   = "GNOXBT"
 	USDTZUSD = "USDTZUSD"
 	XETCXETH = "XETCXETH"
+	XETCXUSD = "XETCXUSD"
 	XETCXXBT = "XETCXXBT"
 	XETCZEUR = "XETCZEUR"
-	XETCXUSD = "XETCXUSD"
 	XETHXXBT = "XETHXXBT"
 	XETHZCAD = "XETHZCAD"
 	XETHZEUR = "XETHZEUR"
@@ -64,6 +66,7 @@ const (
 	XZECZUSD = "XZECZUSD"
 )
 
+// It's for the type of price
 const (
 	BUY    = "b"
 	SELL   = "s"
@@ -103,9 +106,9 @@ type AssetPairsResponse struct {
 	GNOXBT   AssetPairInfo
 	USDTZUSD AssetPairInfo
 	XETCXETH AssetPairInfo
+	XETCXUSD AssetPairInfo
 	XETCXXBT AssetPairInfo
 	XETCZEUR AssetPairInfo
-	XETCXUSD AssetPairInfo
 	XETHXXBT AssetPairInfo
 	XETHZCAD AssetPairInfo
 	XETHZEUR AssetPairInfo
@@ -224,6 +227,7 @@ type AssetInfo struct {
 	DisplayDecimals int `json:"display_decimals"`
 }
 
+// BalanceResponse permit to build a Balance object directly from JSON
 type BalanceResponse struct {
 	BCH  float32 `json:"BCH,string"`
 	DASH float32 `json:"DASH,string"`
@@ -272,9 +276,9 @@ type TickerResponse struct {
 	GNOXBT   PairTickerInfo
 	USDTZUSD PairTickerInfo
 	XETCXETH PairTickerInfo
+	XETCXUSD PairTickerInfo
 	XETCXXBT PairTickerInfo
 	XETCZEUR PairTickerInfo
-	XETCXUSD PairTickerInfo
 	XETHXXBT PairTickerInfo
 	XETHZCAD PairTickerInfo
 	XETHZEUR PairTickerInfo
@@ -470,3 +474,39 @@ type CancelOrderResponse struct {
 }
 
 type QueryOrdersResponse map[string]Order
+
+func NewOHLC(input []interface{}) (*OHLC, error) {
+	if len(input) != 8 {
+		return nil, fmt.Errorf("the length is not 8 but %d", len(input))
+	}
+
+	tmp := new(OHLC)
+	tmp.Time = time.Unix(int64(input[0].(float64)), 0)
+	tmp.Open, _ = strconv.ParseFloat(input[1].(string), 64)
+	tmp.High, _ = strconv.ParseFloat(input[2].(string), 64)
+	tmp.Low, _ = strconv.ParseFloat(input[3].(string), 64)
+	tmp.Close, _ = strconv.ParseFloat(input[4].(string), 64)
+	tmp.Vwap, _ = strconv.ParseFloat(input[5].(string), 64)
+	tmp.Volume, _ = strconv.ParseFloat(input[6].(string), 64)
+	tmp.Count = int(input[7].(float64))
+
+	return tmp, nil
+}
+
+// OHLC represents the "Open-high-low-close chart"
+type OHLC struct {
+	Time   time.Time `json:"time"`
+	Open   float64   `json:"open"`
+	High   float64   `json:"high"`
+	Low    float64   `json:"low"`
+	Close  float64   `json:"close"`
+	Vwap   float64   `json:"vwap"`
+	Volume float64   `json:"volume"`
+	Count  int       `json:"count"`
+}
+
+type OHLCResponse struct {
+	Pair string  `json:"pair"`
+	OHLC []*OHLC `json:"OHLC"`
+	Last int64   `json:"last"`
+}
